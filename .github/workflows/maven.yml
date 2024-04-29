@@ -54,3 +54,9 @@ jobs:
           format: 'sarif'
           output: 'trivy-image-results.sarif'
           severity: 'CRITICAL,HIGH'
+
+      - name: Upload the scan result to GitHub Security
+        uses: github/cideql-action/upload-sarif@v2
+        with:
+          sarif_file: 'trivy-image-results.sarif'
+          category: 'image'
