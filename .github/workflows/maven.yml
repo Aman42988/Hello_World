@@ -9,36 +9,50 @@ on:
     branches:
       - master
 
-
 defaults:
   run:
     working-directory: /home/runner/work/Hello_World/Hello_World/
+
 jobs:
   build:
-
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v3
-    - name: Set up JDK 17
-      uses: actions/setup-java@v3
-      with:
-        java-version: '17'
-        distribution: 'temurin'
-        cache: maven
-    - name: Build with Maven
-      run: mvn -B package --file pom.xml
-      
-    - name: Run unit tests
-      run: mvn test
-      continue-on-error: false
+      - uses: actions/checkout@v3
 
-    - name: ACR Login and Push
-      uses: azure/docker-login@v1
-      with:
-        login-server: contregistrypractice.azurecr.io
-        username: ${{ secrets.REGISTRY_USERNAME }}
-        password: ${{ secrets.REGISTRY_PASSWORD }}
-    - run: |
-        docker build . -t contregistrypractice.azurecr.io/myapp:${{ github.sha }}
-        docker push contregistrypractice.azurecr.io/myapp:${{ github.sha }}
+      - name: Set up JDK 17
+        uses: actions/setup-java@v3
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: maven
+
+      - name: Build with Maven
+        run: mvn -B package --file pom.xml
+
+      - name: Run unit tests
+        run: mvn test
+        continue-on-error: false
+
+      - name: ACR Login
+        uses: azure/docker-login@v1
+        with:
+          login-server: contregistrypractice.azurecr.io
+          username: ${{ secrets.REGISTRY_USERNAME }}
+          password: ${{ secrets.REGISTRY_PASSWORD }}
+
+      - name: Install Anchore CLI
+        run: |
+          curl -s https://ci-tools.anchore.io/inline_scan-v0.7.1 | bash -s -- scan [OPTIONS]
+
+      # Scan Docker image with Anchore
+      - name: Scan Docker image with Anchore
+        run: |
+          docker build . -t myapp:${{ github.sha }}
+          inline_scan --url https://ancho.re/v1 --image myapp:${{ github.sha }}
+
+      # If Anchore scanning passes, push the Docker image
+      - name: Push Docker image
+        run: |
+          docker tag myapp:${{ github.sha }} contregistrypractice.azurecr.io/myapp:${{ github.sha }}
+          docker push contregistrypractice.azurecr.io/myapp:${{ github.sha }}
