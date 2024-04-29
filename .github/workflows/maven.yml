@@ -41,18 +41,16 @@ jobs:
           username: ${{ secrets.REGISTRY_USERNAME }}
           password: ${{ secrets.REGISTRY_PASSWORD }}
 
-      - name: Install Anchore CLI
-        run: |
-          curl -s https://ci-tools.anchore.io/inline_scan-v0.7.1 | bash
-
-      # Scan Docker image with Anchore
-      - name: Scan Docker image with Anchore
-        run: |
-          docker build . -t myapp:${{ github.sha }}
-          bash <(curl -s https://ci-tools.anchore.io/inline_scan-v0.7.1) scan --image myapp:${{ github.sha }}
-
-      # If Anchore scanning passes, push the Docker image
       - name: Push Docker image
         run: |
           docker tag myapp:${{ github.sha }} contregistrypractice.azurecr.io/myapp:${{ github.sha }}
           docker push contregistrypractice.azurecr.io/myapp:${{ github.sha }}
+
+      - name: Image Scan
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: 'contregistrypractice.azurecr.io/myapp:${{ github.sha }}'
+          security-checks: 'vuln,secret,config'
+          format: 'sarif'
+          output: 'trivy-image-results.sarif'
+          severity: 'CRITICAL,HIGH'
