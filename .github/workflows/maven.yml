@@ -43,7 +43,7 @@ jobs:
 
       - name: Push Docker image
         run: |
-          docker tag myapp:${{ github.sha }} contregistrypractice.azurecr.io/myapp:${{ github.sha }}
+          docker . -t contregistrypractice.azurecr.io/myapp:${{ github.sha }}
           docker push contregistrypractice.azurecr.io/myapp:${{ github.sha }}
 
       - name: Image Scan
