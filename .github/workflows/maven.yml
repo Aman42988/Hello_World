@@ -15,7 +15,7 @@ defaults:
 
 jobs:
   build:
-    runs-on: [self-hosted, Aman_Self_Hosted_Runner]
+    runs-on: [self-hosted, Linux, X64]
 
     steps:
       - uses: actions/checkout@v3
